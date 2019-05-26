@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <svg></svg>
+    <script src="http://d3js.org/d3.v5.min.js"></script>
+    <script type="text/javascript">
+
+      const width = 600;
+      const height = 400;
+      const outerRadius = 120;
+      const innerRadius = 80;
+      const pivotRadius = 160;
+
+      const data = [110, 12, 18];
+      const colorArray = ['red', 'green', 'blue'];
+
+      function getMidAngle(d) {
+        return (d.endAngle + d.startAngle) / 2;
+      }
+
+      const svg = d3.select('svg')
+        .attr('width', width)
+        .attr('height', height)
+
+      svg.append('g').attr('class', 'slices')
+      svg.append('g').attr('class', 'lines')
+      svg.append('g').attr('class', 'labels')
+
+      const pie = d3.pie().value((d) => d).sort(null);
+      const slices = pie(data);
+      const innerArc = d3.arc().innerRadius(innerRadius).outerRadius(outerRadius);
+
+      const slice = d3.select('.slices').selectAll('path').data(slices);
+      slice.enter()
+        .append('path')
+        .attr('transform', `translate(${width / 2}, ${height / 2})`)
+        .attr('d', (d, i) => innerArc(slices[i]))
+        .attr('fill', (d, i) => colorArray[i % (colorArray.length)]);
+
+      slice.exit().remove();
+
+      const endPoints = [];
+      const pivotArc = d3.arc().innerRadius(outerRadius).outerRadius(pivotRadius);
+      const line = d3.select('.lines').selectAll('polyline').data(slices);
+      line.enter()
+        .append('polyline')
+        .attr('points', (d, i) => {
+          const slice = slices[i];
+
+          const innerCentroid = innerArc.centroid(slice);
+          const x1 = innerCentroid[0] + width / 2;
+          const y1 = innerCentroid[1] + height / 2;
+
+          const pivotPoint = pivotArc.centroid(slice);
+          const x2 = pivotPoint[0] + width / 2;
+          const y2 = pivotPoint[1] + height / 2;
+
+          const midAngle = getMidAngle(slice);
+          const x3 = x2 + (midAngle > Math.PI ? -20 : 20);
+          const y3 = y2;
+
+          endPoints[i] = [x3, y3];
+
+          return `${x1},${y1} ${x2},${y2} ${x3},${y3}`;
+        })
+        .attr('fill', 'none')
+        .attr('stroke', (d, i) => colorArray[i % (colorArray.length)]);
+
+      line.exit().remove();
+
+      const label = svg.select('.labels').selectAll('text').data(slices);
+      label.enter()
+        .append('text')
+        .text((d) => d.value)
+        .attr('transform', (d, i) => {
+          const x = endPoints[i][0] + (getMidAngle(d) > Math.PI ? -10 : 10);
+          const y = endPoints[i][1] + 5;
+
+          return `translate(${x}, ${y})`;
+        })
+        .attr('text-anchor', (d) => {
+          const midAngle = getMidAngle(d);
+          return midAngle > Math.PI ? 'end' : 'start';
+        });
+
+      label.exit().remove();
+
+    </script>
+  </body>
+</html
