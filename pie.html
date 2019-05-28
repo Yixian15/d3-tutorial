@@ -1,89 +1,175 @@
 <!DOCTYPE html>
 <html>
   <body>
-    <svg></svg>
     <script src="http://d3js.org/d3.v5.min.js"></script>
     <script type="text/javascript">
 
-      const width = 600;
-      const height = 400;
-      const outerRadius = 120;
-      const innerRadius = 80;
-      const pivotRadius = 160;
+      // Sales number of video game GTAV
+      // Data visualization in two pie charts
 
-      const data = [110, 12, 18];
-      const colorArray = ['red', 'green', 'blue'];
+      const PLATFORM = {
+        PS4: 'PS4',
+        PS3: 'PS3',
+        PC: 'PC',
+        XBox360: 'XBOX360',
+        XBoxOne: 'XBoxOne',
+      };
 
-      function getMidAngle(d) {
-        return (d.endAngle + d.startAngle) / 2;
+      const REGION = {
+        NA: 'NA',
+        PAL: 'PAL',
+        JP: 'JP',
+        OTHER: 'OTHER',
       }
 
-      const svg = d3.select('svg')
-        .attr('width', width)
-        .attr('height', height)
+      function getPie(data = []) {
+        // console.log('data', data);
 
-      svg.append('g').attr('class', 'slices')
-      svg.append('g').attr('class', 'lines')
-      svg.append('g').attr('class', 'labels')
+        const width = 600;
+        const height = 400;
+        const outerRadius = 120;
+        const innerRadius = 80;
+        const pivotRadius = 160;
 
-      const pie = d3.pie().value((d) => d).sort(null);
-      const slices = pie(data);
-      const innerArc = d3.arc().innerRadius(innerRadius).outerRadius(outerRadius);
+        // const colorArray = ['red', 'green', 'blue', 'yellow'];
+        const colorArray = [
+          '#204A87',
+          '#EF2928',
+          '#9ADE00',
+          '#0084C8'
+        ]
 
-      const slice = d3.select('.slices').selectAll('path').data(slices);
-      slice.enter()
-        .append('path')
-        .attr('transform', `translate(${width / 2}, ${height / 2})`)
-        .attr('d', (d, i) => innerArc(slices[i]))
-        .attr('fill', (d, i) => colorArray[i % (colorArray.length)]);
+        function getMidAngle(d) {
+          return (d.endAngle + d.startAngle) / 2;
+        }
 
-      slice.exit().remove();
+        const svg = d3.select('body')
+          .append('svg')
+          .attr('width', width)
+          .attr('height', height)
 
-      const endPoints = [];
-      const pivotArc = d3.arc().innerRadius(outerRadius).outerRadius(pivotRadius);
-      const line = d3.select('.lines').selectAll('polyline').data(slices);
-      line.enter()
-        .append('polyline')
-        .attr('points', (d, i) => {
-          const slice = slices[i];
+        svg.append('g').attr('class', 'slices')
+        svg.append('g').attr('class', 'lines')
+        svg.append('g').attr('class', 'labels')
 
-          const innerCentroid = innerArc.centroid(slice);
-          const x1 = innerCentroid[0] + width / 2;
-          const y1 = innerCentroid[1] + height / 2;
+        const overallTotal = data.reduce((accu, curr) => accu + curr.total || 0, 0);
+        const formattedOverallTotal = Math.floor(100 * overallTotal) / 100;
+        svg.append('text').text(`${formattedOverallTotal} m`).attr('transform', `translate(${width / 2}, ${height / 2})`).attr('text-anchor', 'middle')
 
-          const pivotPoint = pivotArc.centroid(slice);
-          const x2 = pivotPoint[0] + width / 2;
-          const y2 = pivotPoint[1] + height / 2;
+        const getValue = (d) => {
+          return d.total;
+        };
 
-          const midAngle = getMidAngle(slice);
-          const x3 = x2 + (midAngle > Math.PI ? -20 : 20);
-          const y3 = y2;
+        const pie = d3.pie().value(getValue);
+        const slices = pie(data);
+        const innerArc = d3.arc().innerRadius(innerRadius).outerRadius(outerRadius);
 
-          endPoints[i] = [x3, y3];
+        const slice = svg.select('.slices').selectAll('path').data(slices);
+        slice.enter()
+          .append('path')
+          .attr('transform', `translate(${width / 2}, ${height / 2})`)
+          .attr('d', (d, i) => innerArc(slices[i]))
+          .attr('fill', (d, i) => colorArray[i % (colorArray.length)]);
 
-          return `${x1},${y1} ${x2},${y2} ${x3},${y3}`;
-        })
-        .attr('fill', 'none')
-        .attr('stroke', (d, i) => colorArray[i % (colorArray.length)]);
+        slice.exit().remove();
 
-      line.exit().remove();
+        const endPoints = [];
+        const pivotArc = d3.arc().innerRadius(outerRadius).outerRadius(pivotRadius);
+        const line = svg.select('.lines').selectAll('polyline').data(slices);
+        line.enter()
+          .append('polyline')
+          .attr('points', (d, i) => {
+            const slice = slices[i];
 
-      const label = svg.select('.labels').selectAll('text').data(slices);
-      label.enter()
-        .append('text')
-        .text((d) => d.value)
-        .attr('transform', (d, i) => {
-          const x = endPoints[i][0] + (getMidAngle(d) > Math.PI ? -10 : 10);
-          const y = endPoints[i][1] + 5;
+            const innerCentroid = innerArc.centroid(slice);
+            const x1 = innerCentroid[0] + width / 2;
+            const y1 = innerCentroid[1] + height / 2;
 
-          return `translate(${x}, ${y})`;
-        })
-        .attr('text-anchor', (d) => {
-          const midAngle = getMidAngle(d);
-          return midAngle > Math.PI ? 'end' : 'start';
+            const pivotPoint = pivotArc.centroid(slice);
+            const x2 = pivotPoint[0] + width / 2;
+            const y2 = pivotPoint[1] + height / 2;
+
+            const midAngle = getMidAngle(slice);
+            const x3 = x2 + (midAngle > Math.PI ? -20 : 20);
+            const y3 = y2;
+
+            endPoints[i] = [x3, y3];
+
+            return `${x1},${y1} ${x2},${y2} ${x3},${y3}`;
+          })
+          .attr('fill', 'none')
+          .attr('stroke', (d, i) => colorArray[i % (colorArray.length)]);
+
+        line.exit().remove();
+
+        const label = svg.select('.labels').selectAll('text').data(slices);
+        label.enter()
+          .append('text')
+          .text((d) => {
+            const value = d.value;
+            const label = d.data.label;
+            return `${label}: ${value} m`;
+          })
+          .attr('transform', (d, i) => {
+            const x = endPoints[i][0] + (getMidAngle(d) > Math.PI ? -10 : 10);
+            const y = endPoints[i][1] + 5;
+
+            return `translate(${x}, ${y})`;
+          })
+          .attr('text-anchor', (d) => {
+            const midAngle = getMidAngle(d);
+            return midAngle > Math.PI ? 'end' : 'start';
+          });
+
+        label.exit().remove();
+      }
+
+      function visualize(data) {
+        const regionData = Object.keys(REGION).map((region) => {
+          const total = data.map((datum) => datum.sales[region]).reduce((accu, curr) => accu + curr, 0);
+
+          return {
+            region,
+            total: Math.floor(total * 100) / 100,
+            label: region,
+          };
         });
 
-      label.exit().remove();
+        const platformData = data.map((d) => {
+          let total;
+          if (d.total) {
+            total = d.total;
+          } else {
+            total = Object.values(d.sales).reduce((accu, curr) => accu + curr, 0);
+          }
+          return {
+            ...d,
+            total: Math.floor(100 * total) / 100,
+            label: d.platform,
+          };
+        });
+
+        getPie(platformData, 'pie1');
+        getPie(regionData, 'pie2');
+      }
+
+      // Need to start a local file server for serving this file due to the security policy of web browser
+      d3.csv('./GTAV.csv', (row) => {
+        const dataObject = {
+          total: parseFloat(row['TOTAL']) || 0,
+        };
+
+        return {
+          platform: row.platform,
+          sales: Object.keys(REGION).reduce((accu, region) => {
+            return {
+              ...accu,
+              [region]: parseFloat(row[region]),
+            };
+          }, dataObject),
+        };
+      })
+      .then(visualize);
 
     </script>
   </body>
