@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <style>
+      svg {
+        border: 1px solid red;
+      }
+
+      .update {
+        fill: grey;
+      }
+
+      .enter {
+        fill: green;
+      }
+
+      .exit {
+        fill: tomato;
+      }
+
+    </style>
+    <script src="http://d3js.org/d3.v5.min.js"></script>
+    <script type="text/javascript">
+      // Visualize general update pattern with bars
+      // Inspired by articles: Genera Update Pattern I, II and III
+      // https://bl.ocks.org/mbostock/3808218
+      const maxHeight = 400;
+      const maxWidth = 600;
+
+      const svg = d3.select('body')
+        .append('svg')
+        .attr('width', maxWidth)
+        .attr('height', maxHeight);
+
+      function getRandomArray(maxLength, maxNumber) {
+        const length = Math.floor(Math.random() * maxLength);
+        const res = [];
+        let i = 0;
+        while(i < length) {
+          res.push(Math.floor(Math.random() * maxNumber));
+          i++;
+        }
+        return res;
+      }
+
+      function renderBars(data, maxData) {
+        const barWidth = 20;
+        const barHeight = d3.scaleLinear()
+          .domain([0, maxData])
+          .range([0, maxHeight]);
+
+        const t = d3.transition().duration(1000);
+
+        const bar = svg.selectAll('rect').data(data, (d) => d);
+
+        bar.exit()
+          .attr('class', 'exit')
+          .transition(t)
+          .attr('y', (d) => maxHeight - barHeight(d) + 60)
+          .style('fill-opacity', 1e-6)
+          .remove();
+
+        bar.attr('class', 'update')
+          .attr('y', (d, i) => {
+            const height = barHeight(d);
+            return maxHeight - height;
+          })
+          .attr('width', barWidth - 1)
+          .attr('height', (d) => barHeight(d))
+          .style('fill-opacity', 1)
+          .transition(t)
+          .attr('x', (d, i) => barWidth * i)
+
+        bar.enter()
+          .append('rect')
+          .attr('class', 'enter')
+          .attr('width', barWidth - 1)
+          .attr('height', (d) => barHeight(d))
+          .attr('x', (d, i) => barWidth * i)
+          .attr('y', (d) => maxHeight - barHeight(d) - 60)
+          .style('fill-opacity', 1e-6)
+          .transition(t)
+          .attr('y', (d, i) => {
+            const height = barHeight(d);
+            return maxHeight - height;
+          })
+          .style('fill-opacity', 1)
+
+      }
+
+      const data = getRandomArray(30, 100);
+      renderBars(data, 100);
+
+      setInterval(() => {
+        const data = getRandomArray(30, 100);
+        renderBars(data, 100);
+      }, 1200);
+
+    </script>
+  </body>
+</html>
