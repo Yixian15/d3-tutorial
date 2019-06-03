@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <style>
+      svg {
+        border: 1px solid lightgrey;
+      }
+
+    </style>
+    <script src="http://d3js.org/d3.v5.min.js"></script>
+    <script type="text/javascript">
+      const maxHeight = 400;
+      const maxWidth = 600;
+      const barWidth = 20;
+
+      const svg = d3.select('body')
+        .append('svg')
+        .attr('width', maxWidth)
+        .attr('height', maxHeight);
+
+      const data = [
+        {
+          day: 1,
+          apple: 10,
+          tomato: 10,
+          orange: 20,
+        },
+        {
+          day: 2,
+          banana: 20,
+          tomato: 20,
+          orange: 10,
+        },
+        {
+          day: 3,
+          tomato: 10,
+          pineapple: 10,
+        },
+      ];
+
+      const stack = d3.stack().keys(['apple', 'banana', 'tomato', 'orange', 'pineapple']).order(d3.stackOrderNone).offset(d3.stackOffsetNone);
+      const series = stack(data);
+      const colorArray = ['#38CCCB', '#0074D9', '#2FCC40', '#FEDC00', '#FF4036'];
+
+      function renderVerticalStack() {
+        const svg = d3.select('body')
+          .append('svg')
+          .attr('width', maxWidth)
+          .attr('height', maxHeight);
+
+        const x = d3.scaleBand()
+          .domain(data.map((d) => d.day))
+          .range([0, maxWidth])
+
+        const stackMax = (serie) => d3.max(serie, (d) => d ? d[1] : 0)
+        const stackMin = (serie) => d3.min(serie, (d) => d? d[0]: 0)
+
+        const y = d3.scaleLinear()
+          .domain([d3.max(series, stackMax), d3.min(series, stackMin)])
+          .range([0, maxHeight])
+
+        const g = svg.selectAll('g')
+          .data(series)
+          .enter()
+          .append('g')
+          .attr('fill', (d, i) => colorArray[i % colorArray.length])
+          .selectAll('rect')
+          .data((d) => d)
+          .enter()
+          .append('rect')
+          .attr('x', (d) => x(d.data.day))
+          .attr('y', (d) => y(d[1]))
+          .attr('width', barWidth)
+          .attr('height', (d) => {
+            return y(d[0]) - y(d[1])
+          })
+      }
+
+      function renderHorizontalStack() {
+        const y = d3.scaleBand()
+          .domain(data.map((d) => d.day))
+          .range([0, maxHeight])
+
+        const stackMin = (serie) => d3.min(serie, (d) => d[0])
+        const stackMax = (serie) => d3.max(serie, (d) => d[1])
+        const x = d3.scaleLinear()
+          .domain([d3.min(series, stackMin), d3.max(series, stackMax)])
+          .range([0, maxWidth])
+
+        svg.selectAll('g')
+          .data(series)
+          .enter()
+          .append('g')
+          .attr('fill', (d, i) => colorArray[i % colorArray.length])
+          .selectAll('rect')
+          .data((d) => d)
+          .enter()
+          .append('rect')
+          .attr('y', (d) => y(d.data.day))
+          .attr('x', (d) => x(d[0]))
+          .attr('height', 20)
+          .attr('width', (d) => x(d[1]) - x(d[0]))
+      }
+
+      renderVerticalStack()
+      renderHorizontalStack()
+
+    </script>
+  </body>
+</html>
