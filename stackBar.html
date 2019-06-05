@@ -13,11 +13,6 @@
       const maxWidth = 600;
       const barWidth = 20;
 
-      const svg = d3.select('body')
-        .append('svg')
-        .attr('width', maxWidth)
-        .attr('height', maxHeight);
-
       const data = [
         {
           day: 1,
@@ -77,6 +72,11 @@
       }
 
       function renderHorizontalStack() {
+        const svg = d3.select('body')
+          .append('svg')
+          .attr('width', maxWidth)
+          .attr('height', maxHeight);
+          
         const y = d3.scaleBand()
           .domain(data.map((d) => d.day))
           .range([0, maxHeight])
