@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <style>
+      svg {
+        border: 1px solid lightgrey;
+      }
+
+    </style>
+    <script src="http://d3js.org/d3.v5.min.js"></script>
+    <script type="text/javascript">
+      const maxHeight = 400;
+      const maxWidth = 600;
+
+      const margin = {
+        top: 20,
+        right: 60,
+        bottom: 20,
+        left: 60,
+      };
+
+      const colorArray = ['#38CCCB', '#0074D9', '#2FCC40', '#FEDC00', '#FF4036', 'lightgrey'];
+
+      const fruits = [
+        {
+          label: 'apple',
+          value: 10,
+        },
+        {
+          label: 'banana',
+          value: 15,
+        },
+        {
+          label: 'orange',
+          value: 25,
+        }
+      ];
+
+      const groups = [
+        {
+          label: 'group1',
+          value1: 10,
+          value2: 300,
+        },
+        {
+          label: 'group2',
+          value1: 20,
+          value2: 150,
+        },
+        {
+          label: 'group3',
+          value1: 30,
+          value2: 100,
+        },
+      ];
+
+      function renderVerticalBars(data) {
+        const barWidth = 20;
+
+        const xTicks = new Array(data.length + 1);
+        for ( let i = 0; i <= data.length; i++ ) {
+          xTicks[i] = i;
+        }
+
+        const getX = (d) => d.label;
+        const getY = (d) => d.value; 
+
+        const scaleX = d3.scalePoint()
+          .domain(data.map(getX))
+          .range([0, maxWidth - margin.left - margin.right])
+          .padding(0.2)
+
+        const scaleY = d3.scaleLinear()
+          .domain([0, d3.max(data, getY)])
+          .range([maxHeight - margin.top - margin.bottom, 0])
+
+        const svg = d3.select('body')
+          .append('svg')
+          .attr('width', maxWidth)
+          .attr('height', maxHeight)
+
+        const bar = svg.selectAll('rect')
+          .data(data)
+          .enter()
+          .append('rect')
+          .attr('x', (d) => scaleX(getX(d)) + margin.left - barWidth / 2)
+          .attr('y', (d) => scaleY(getY(d)) + margin.top)
+          .attr('width', barWidth - 1)
+          .attr('height', (d) => maxHeight - margin.bottom - margin.top - scaleY(getY(d)))
+          .attr('fill', (d, i) => colorArray[i % colorArray.length])
+
+        const axisLeft = d3.axisLeft(scaleY);
+        svg.append('g')
+          .attr('transform', `translate(${margin.left}, ${margin.top})`)
+          .call(axisLeft);
+
+        const axisBottom = d3.axisBottom(scaleX);
+        svg.append('g')
+          .attr('transform', `translate(${margin.left}, ${maxHeight - margin.bottom})`)
+          .call(axisBottom);
+      }
+
+      function renderHorizontalBars(data) {
+        const barHeight = 20;
+
+        const yTicks = new Array(data.length + 1);
+        for ( let i = 0; i <= data.length; i++ ) {
+          yTicks[i] = i;
+        }
+
+        const getX = (d) => d.value;
+        const getY = (d) => d.label; 
+
+        const scaleY = d3.scalePoint()
+          .domain(data.map(getY))
+          .range([0, maxHeight - margin.top - margin.bottom])
+          .padding(0.2)
+
+        const scaleX = d3.scaleLinear()
+          .domain([0, d3.max(data, getX)])
+          .range([0, maxWidth - margin.left - margin.right])
+
+        const svg = d3.select('body')
+          .append('svg')
+          .attr('width', maxWidth)
+          .attr('height', maxHeight)
+
+        const bar = svg.selectAll('rect')
+          .data(data)
+          .enter()
+          .append('rect')
+          .attr('x', margin.left)
+          .attr('y', (d) => scaleY(getY(d)) + margin.top - barHeight / 2)
+          .attr('width', (d) => scaleX(getX(d)))
+          .attr('height', barHeight)
+          .attr('fill', (d, i) => colorArray[i % colorArray.length])
+
+        const axisLeft = d3.axisLeft(scaleY);
+        svg.append('g')
+          .attr('transform', `translate(${margin.left}, ${margin.top})`)
+          .call(axisLeft);
+
+        const axisBottom = d3.axisBottom(scaleX);
+        svg.append('g')
+          .attr('transform', `translate(${margin.left}, ${maxHeight - margin.bottom})`)
+          .call(axisBottom);
+      }
+
+      function renderBarGroups(data, keys = []) {
+        const getX = (d) => d.label;
+        const key1 = keys[0] || '';
+        const key2 = keys[1] || '';
+        const getY1 = (d) => d[key1];
+        const getY2 = (d) => d[key2];
+
+        const scaleX = d3.scalePoint()
+          .domain(data.map(getX))
+          .range([0, maxWidth - margin.left - margin.right])
+          .padding(0.2)
+
+        const scaleY1 = d3.scaleLinear()
+          .domain([0, d3.max(data, getY1)])
+          .range([maxHeight - margin.top - margin.bottom, 0]);
+
+        const scaleY2 = d3.scaleLinear()
+          .domain([0, d3.max(data, getY2)])
+          .range([maxHeight - margin.top - margin.bottom, 0]);
+
+        const svg = d3.select('body')
+          .append('svg')
+          .attr('width', maxWidth)
+          .attr('height', maxHeight)
+
+        function renderBars(getX, getY, scaleX, scaleY, barWidth, offsetX, color) {
+          const bars = svg.append('g').selectAll('rect')
+            .data(data)
+            .enter()
+            .append('rect')
+            .attr('x', (d) => margin.left + scaleX(getX(d)) + offsetX - barWidth)
+            .attr('y', (d) => scaleY(getY(d)) + margin.top)
+            .attr('width', barWidth)
+            .attr('height', (d) => maxHeight - margin.top - margin.bottom - scaleY(getY(d)))
+            .attr('fill', color)
+        }
+
+        renderBars(getX, getY1, scaleX, scaleY1, 20, 0, colorArray[0]);
+        renderBars(getX, getY2, scaleX, scaleY2, 20, 20, colorArray[1]);
+
+        const axisLeft = d3.axisLeft(scaleY1);
+        svg.append('g')
+          .attr('transform', `translate(${margin.left}, ${margin.top})`)
+          .call(axisLeft);
+
+        const axisRight = d3.axisRight(scaleY2);
+        svg.append('g')
+          .attr('transform', `translate(${maxWidth - margin.right}, ${margin.top})`)
+          .call(axisRight);
+
+        const axisBottom = d3.axisBottom(scaleX);
+        svg.append('g')
+          .attr('transform', `translate(${margin.left}, ${maxHeight - margin.bottom})`)
+          .call(axisBottom);
+        
+      }
+
+      renderVerticalBars(fruits);
+      renderHorizontalBars(fruits);
+      renderBarGroups(groups, ['value1', 'value2']);
+
+    </script>
+  </body>
+</html>
